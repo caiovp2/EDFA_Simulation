@@ -1,10 +1,11 @@
-function [overlap,R,intensity,intensityEr] = Function_Overlap(Fiber,Laser)
+function [overlap,R,intensity,intensityEr] = Function_Overlap(Fiber,Laser,kk)
+
 %% Function_Overlap Header
 %c
 %c                                                       ..'´`'..'´`..'´`..                                                   
 %c                                                    
 %c    function [overlap,R,intensity,intensityEr] 
-%c                                        = Function_Overlap(Fiber,Laser);
+%c                                        = Function_Overlap(Fiber,Laser,kk);
 %c
 %c     Function_Overlap calculates the overlap parameter of a chosen
 %c     wavelength using the parameters of the Fiber that is specified 
@@ -14,6 +15,7 @@ function [overlap,R,intensity,intensityEr] = Function_Overlap(Fiber,Laser)
 %c     INPUT:
 %c             Fiber             : Fiber Struct
 %c             Laser             : Laser Struct
+%c             kk                : Counter
 %c               
 %c     OUTPUT: 
 %c             overlap           : Overlap Parameter [] 
@@ -132,9 +134,9 @@ maxargs  = 10;
 narginchk(minargs, maxargs) % Checks if the number of inputs is between
                             % minargs and maxargs
 
-%% Code
+%% Calculating the Overlap Parameter
 
-V = 2*pi*Fiber.CoreRadius*Fiber.NA/Laser.Wavelength; % Normalized Frequency
+V = 2*pi*Fiber.CoreRadius*Fiber.NA/Laser.Wavelength(1,kk); % Normalized Frequency
 v = 1.1428*V - 0.9960;                               % [Ref. 3]
 u = sqrt(V^2 - v^2);                                 % [Ref. 3]
 
@@ -174,7 +176,6 @@ intensityEr = intensity.*(R <= Fiber.beff);
 % distribution is constant from r=0 to r=Fiber.beff. [Ref. 2 - Pg 144]
 overlap = trapz(R,R.*intensityEr);
 overlap = 2*pi*overlap;
-
 
 %% Normalized Frequency Check (See "Important Notes" section in header)
 

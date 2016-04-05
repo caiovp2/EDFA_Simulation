@@ -66,97 +66,109 @@ close all; % Closes figures
 EDFA_Input_Data;
 
 %% Calculates the Overlap Parameters
-[Pump.Overlap,Pump.RC,Pump.MI,~] = Function_Overlap(Fiber,Pump);
-[Signal.Overlap,Signal.RC,Signal.MI,~] = Function_Overlap(Fiber,Signal);
-[ASE.Overlap,~,~,~] = Function_Overlap(Fiber,ASE);
+
+for kk=1:length(Pump.Wavelength)
+[Pump.Overlap(:,kk),Pump.RC(:,kk),Pump.MI(:,kk),~] = Function_Overlap(Fiber,Pump,kk);
+end
+
+for kk=1:length(Signal.Wavelength) 
+[Signal.Overlap(:,kk),Signal.RC(:,kk),Signal.MI(:,kk),~] = Function_Overlap(Fiber,Signal,kk);
+end
+
+for kk=1:length(ASE.Wavelength)
+[ASE.Overlap(:,kk),~,~,~] = Function_Overlap(Fiber,ASE,kk);
+end
+
+clear kk
 
 %% Absorption and Gain coefficients
 
-Pump.Absorption   = Pump.Overlap*Pump.sigmaA*Fiber.nt;
-Pump.Gain         = Pump.Overlap*Pump.sigmaE*Fiber.nt;
+for kk=1:length(Pump.Wavelength)
+Pump.Absorption(1,kk)   = Pump.Overlap(1,kk)*Pump.sigmaA(1,kk)*Fiber.nt;
+Pump.Gain(1,kk)         = Pump.Overlap(1,kk)*Pump.sigmaE(1,kk)*Fiber.nt;
+end
 
-Signal.Absorption = Signal.Overlap*Signal.sigmaA*Fiber.nt;
-Signal.Gain       = Signal.Overlap*Signal.sigmaE*Fiber.nt;
+for kk=1:length(Signal.Wavelength)
+Signal.Absorption(1,kk) = Signal.Overlap(1,kk)*Signal.sigmaA(1,kk)*Fiber.nt;
+Signal.Gain(1,kk)       = Signal.Overlap(1,kk)*Signal.sigmaE(1,kk)*Fiber.nt;
+end
 
-ASE.Absorption = ASE.Overlap*ASE.sigmaA*Fiber.nt;
-ASE.Gain       = ASE.Overlap*ASE.sigmaE*Fiber.nt;
+for kk=1:length(ASE.Wavelength)
+ASE.Absorption(1,kk) = ASE.Overlap(1,kk)*ASE.sigmaA(1,kk)*Fiber.nt;
+ASE.Gain(1,kk)       = ASE.Overlap(1,kk)*ASE.sigmaE(1,kk)*Fiber.nt;
+end
 
-%% Solving Differential Equations (COMENTADO) (NOT FINISHED) 
-% 
-% options = odeset('RelTol',1e-5,'AbsTol',1e-9,'NonNegative',[1 2 3 4],'Refine',10);
-% Propagates Forward
-% P0_fwd = [Signal.Power Pump.Power 0 11e-3]; % Initial Conditions L = 0
-% [Z_fwd,Power_fwd] = ode45('diff_func',[0 Fiber.Length],P0_fwd,options,...
-%                   Fiber,Signal,Pump,ASE,h,m,c);  %Parameters
-% Propagates Backward              
-% P0_bkwd = [Power_fwd(length(Power_fwd),1) Power_fwd(length(Power_fwd),2)...
-%            Power_fwd(length(Power_fwd),3) 1e-300]; % Initial Conditions L = L             
-% [Z_bkwd,Power_bkwd] = ode45('diff_func',[Fiber.Length 0],P0_bkwd,options,...
-%                   Fiber,Signal,Pump,ASE,h,m,c);  %Parameters
-% Z_bkwd = wrev(Z_bkwd);
-% Power_bkwd = flipud(Power_bkwd);
-% Test plot
-% figure;
-% subplot(2,2,1)
-% plot(Z_fwd,Power_fwd(:,1),Z_bkwd,Power_bkwd(:,1),'r');
-% title('Signal')
-% subplot(2,2,2)
-% plot(Z_fwd,Power_fwd(:,2),Z_bkwd,Power_bkwd(:,2),'r');
-% title('Pump')
-% subplot(2,2,3)
-% plot(Z_fwd,Power_fwd(:,3),Z_bkwd,Power_bkwd(:,3),'r');
-% title('ASE+')
-% subplot(2,2,4)
-% plot(Z_fwd,Power_fwd(:,4),Z_bkwd,Power_bkwd(:,4),'r');
-% title('ASE-')
+clear kk
 
 %% Analytical Solution to the two-level system
 
-Qin = [Signal.Power*Signal.Wavelength Pump.Power*Pump.Wavelength]./(h*c);
-
-implicit = @(x,y) implicit_func(x,Fiber,Signal,Pump,h,c);
-xo = [0 sum(Qin)];
-Qout = fzero(implicit,xo);
-
-A = [Signal.Absorption Pump.Absorption];
-G = [Signal.Gain Pump.Gain];
-
-Ps = Qin(1,1)*exp( ( A(1,1)+G(1,1) )*( Qin(1,1)+Qin(1,2)-Qout )/Fiber.zeta -A(1,1)*Fiber.Length )*h*c/Signal.Wavelength; 
-Pp = Qin(1,2)*exp( ( A(1,2)+G(1,2) )*( Qin(1,1)+Qin(1,2)-Qout )/Fiber.zeta -A(1,2)*Fiber.Length )*h*c/Pump.Wavelength;
-
-clear Qin Qout xo A G
+% Qin = [Signal.Power*Signal.Wavelength Pump.Power*Pump.Wavelength]./(h*c);
+% 
+% implicit = @(x,y) implicit_func(x,Fiber,Signal,Pump,h,c);
+% xo = [0 sum(Qin)];
+% Qout = fzero(implicit,xo);
+% 
+% A = [Signal.Absorption Pump.Absorption];
+% G = [Signal.Gain Pump.Gain];
+% 
+% Ps = Qin(1,1)*exp( ( A(1,1)+G(1,1) )*( Qin(1,1)+Qin(1,2)-Qout )/Fiber.zeta -A(1,1)*Fiber.Length )*h*c/Signal.Wavelength; 
+% Pp = Qin(1,2)*exp( ( A(1,2)+G(1,2) )*( Qin(1,1)+Qin(1,2)-Qout )/Fiber.zeta -A(1,2)*Fiber.Length )*h*c/Pump.Wavelength;
+% 
+% clear Qin Qout xo A G
 
 %% Solving Differential Equations
+aux = 1;
+for ss=1:length(Signal.Wavelength);    
+for pp=1:length(Pump.Wavelength);
 
-odes = @(x,y) diff_func(x,y,Fiber,Signal,Pump,ASE,h,m,c);
-bcs = @(xa,ya) bcs_func(xa,ya,Signal,Pump,ASE);
+    for kk=1:4
+        Pump.Power = kk*10e-3;
+    odes = @(x,y) diff_func(x,y,Fiber,Signal,Pump,ASE,h,m,c,ss,pp);
+    bcs = @(xa,ya) bcs_func(xa,ya,Signal,Pump,ASE);
 
-%options = bvpset('RelTol',1e-9,'AbsTol',1e-9,'Nmax',1e3);
-options = bvpset('RelTol',1e-5,'AbsTol',1e-9);
+    %options = bvpset('RelTol',1e-9,'AbsTol',1e-9,'Nmax',1e3);
+    options = bvpset('RelTol',1e-5,'AbsTol',1e-9);
 
-%solinit=bvpinit(linspace(0,Fiber.Length,50),[ 10e-3 1e-4 0 0]);
-solinit=bvpinit(linspace(0,Fiber.Length,50),[ Pp Signal.Power 1e-3 1e-3]);
+    %solinit=bvpinit(linspace(0,Fiber.Length,50),[ 10e-3 1e-4 0 0]);
+    solinit=bvpinit(linspace(0,Fiber.Length,50),[ Pump.Power/2 Signal.Power 1e-3 1e-3]);
 
-sol = bvp4c(odes,bcs,solinit,options);
-figure;
-plot(sol.x,sol.y);
-Z=sol.x';
-Power=sol.y';
+    sol = bvp4c(odes,bcs,solinit,options);
+    gain(kk,aux) = 10*log10(sol.y(1,length(sol.y))/sol.y(1,1));
+    
+    
+         N2 =((h*Fiber.zeta)^-1)*(sol.y(:,1)*Signal.Absorption(1,ss)/(c/Signal.Wavelength(1,ss))+...
+                              sol.y(:,2)*Pump.Absorption(1,pp)/(c/Pump.Wavelength(1,pp))+...
+                              sol.y(:,3)*ASE.Absorption(1,ss)/(c/ASE.Wavelength(1,ss))+...
+                           sol.y(:,4)*ASE.Absorption(1,ss)/(c/ASE.Wavelength(1,ss)))*...
+                            Fiber.nt./(1 +((h*Fiber.zeta)^-1)*...
+                (sol.y(:,1)*(Signal.Absorption(1,ss)+Signal.Gain(1,ss))/(c/Signal.Wavelength(1,ss))+...
+                sol.y(:,2)*(Pump.Absorption(1,pp)+Pump.Gain(1,pp))/(c/Pump.Wavelength(1,pp))+...
+                sol.y(:,3)*(ASE.Absorption(1,ss)+ASE.Gain(1,ss))/(c/ASE.Wavelength(1,ss))+...
+                sol.y(:,4)*(ASE.Absorption(1,ss)+ASE.Gain(1,ss))/(c/ASE.Wavelength(1,ss))));
+                gain2(kk,aux) = exp(((Signal.Absorption(1,ss)+Signal.Gain(1,ss))*mean(N2)-Signal.Absorption(1,ss))*Fiber.Length);
+    
+    end
+aux = aux + 1;
+end
+end
+
+plot(gain)
+legend('980:1530','1480:1530','980:1550','1480:1550')
 
 %% Later ( COMENTADO ) (NOT FINISHED)
 
-N2 =((h*Fiber.zeta)^-1)*(Power(:,1)*Signal.Absorption/Signal.Wavelength+...
-                         Power(:,2)*Pump.Absorption/Pump.Wavelength+...
-                         Power(:,3)*ASE.Absorption/ASE.Wavelength+...
-                         Power(:,4)*ASE.Absorption/ASE.Wavelength)*...
-      Fiber.nt./(1 +((h*Fiber.zeta)^-1)*...
-     (Power(:,1)*(Signal.Absorption+Signal.Gain)/Signal.Wavelength+...
-      Power(:,2)*(Pump.Absorption+Pump.Gain)/Pump.Wavelength+...
-      Power(:,3)*(ASE.Absorption+ASE.Gain)/ASE.Wavelength+...
-      Power(:,4)*(ASE.Absorption+ASE.Gain)/ASE.Wavelength));
-  
-gain = 10*log10(Power(:,1)/Power(1,1));
-G = exp((Signal.Absorption+Signal.Gain)*mean(N2)/Fiber.nt-Signal.Absorption)*Fiber.Length;
+% N2 =((h*Fiber.zeta)^-1)*(Power(:,1)*Signal.Absorption/Signal.Wavelength+...
+%                          Power(:,2)*Pump.Absorption/Pump.Wavelength+...
+%                          Power(:,3)*ASE.Absorption/ASE.Wavelength+...
+%                          Power(:,4)*ASE.Absorption/ASE.Wavelength)*...
+%       Fiber.nt./(1 +((h*Fiber.zeta)^-1)*...
+%      (Power(:,1)*(Signal.Absorption+Signal.Gain)/Signal.Wavelength+...
+%       Power(:,2)*(Pump.Absorption+Pump.Gain)/Pump.Wavelength+...
+%       Power(:,3)*(ASE.Absorption+ASE.Gain)/ASE.Wavelength+...
+%       Power(:,4)*(ASE.Absorption+ASE.Gain)/ASE.Wavelength));
+%   
+% gain = 10*log10(Power(:,1)/Power(1,1));
+% G = exp((Signal.Absorption+Signal.Gain)*mean(N2)/Fiber.nt-Signal.Absorption)*Fiber.Length;
 
 %% End
 
