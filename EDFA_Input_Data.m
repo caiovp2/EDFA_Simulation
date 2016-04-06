@@ -107,13 +107,13 @@ m     = 2;                            % Number of modes []
   Signal.Power = 1e-7; % Power [W]
   Signal.u = 1;         % Direction of Propagation [1=Forward  -1=Backward]
   Signal.l = 0.03;      % Excess Losses [dB/m]
-  Signal.Wavelength = [1530 1550]*1e-9; % Wavelength [m]
+  Signal.Wavelength = 1530e-9; % Wavelength [m]
   
 %% Pump Laser
-  Pump.Power = 75e-3; % Power [W]
+  Pump.Power = 2e-3; % Power [W]
   Pump.u = 1;         % Direction of Propagation [1=Forward  -1=Backward]
   Pump.l = 0.03;      % Excess Losses [dB/m]
-  Pump.Wavelength = [980 1480]*1e-9; % Wavelength [m]
+  Pump.Wavelength = 980*1e-9; % Wavelength [m]
   
 %% ASE
   ASE.Power = 0;                       % ASE Power [W]

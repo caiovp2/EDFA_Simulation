@@ -1,4 +1,4 @@
-function res = bcs_func( ya,yb,Signal,Pump,ASE )
+function res = Function_Boundary_Conditions( ya,yb,Signal,Pump,ASE )
 
 res (1) = ya(1)-Signal.Power; % Signal -> L(0) = Signal.Power
 res (2) = ya(2)-Pump.Power;   % Pump   -> L(0) = Pump.Power

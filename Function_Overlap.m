@@ -1,4 +1,4 @@
-function [overlap,R,intensity,intensityEr] = Function_Overlap(Fiber,Laser,kk)
+function [overlap,R,intensity,intensityEr] = Function_Overlap(Fiber,Laser)
 
 %% Function_Overlap Header
 %c
@@ -136,7 +136,7 @@ narginchk(minargs, maxargs) % Checks if the number of inputs is between
 
 %% Calculating the Overlap Parameter
 
-V = 2*pi*Fiber.CoreRadius*Fiber.NA/Laser.Wavelength(1,kk); % Normalized Frequency
+V = 2*pi*Fiber.CoreRadius*Fiber.NA/Laser.Wavelength; % Normalized Frequency
 v = 1.1428*V - 0.9960;                               % [Ref. 3]
 u = sqrt(V^2 - v^2);                                 % [Ref. 3]
 

@@ -1,9 +1,9 @@
-%function dP = diff_func(z,P,options,Fiber,Signal,Pump,ASE,h,m,c)
-function dP = diff_func(z,P,Fiber,Signal,Pump,ASE,h,m,c,ss,pp)
+%function dP = Function_Diff_Equations(z,P,options,Fiber,Signal,Pump,ASE,h,m,c)
+function dP = Function_Diff_Equations(z,P,Fiber,Signal,Pump,ASE,h,m,c)
 
-A = [Signal.Absorption(1,ss) , Pump.Absorption(1,pp), ASE.Absorption(1,ss), ASE.Absorption(1,ss)];
-G = [Signal.Gain(1,ss) , Pump.Gain(1,pp), ASE.Gain(1,ss), ASE.Gain(1,ss)];
-v = c./[Signal.Wavelength(1,ss) , Pump.Wavelength(1,pp), ASE.Wavelength(1,ss), ASE.Wavelength(1,ss)];
+A = [Signal.Absorption  , Pump.Absorption , ASE.Absorption , ASE.Absorption ];
+G = [Signal.Gain  , Pump.Gain , ASE.Gain , ASE.Gain ];
+v = c./[Signal.Wavelength  , Pump.Wavelength , ASE.Wavelength , ASE.Wavelength ];
 u = [Signal.u , Pump.u, ASE.u, -ASE.u];
 L = (log(10)/10).*[Signal.l , Pump.l, ASE.l, ASE.l];
 

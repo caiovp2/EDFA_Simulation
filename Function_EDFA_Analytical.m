@@ -1,4 +1,4 @@
-function y = implicit_func(Qout,Fiber,Signal,Pump,h,c)
+function y = Function_EDFA_Analytical(Qout,Fiber,Signal,Pump,h,c)
 
 % Qin = P/hv = P*lambda/hc
 Qin = [Signal.Power*Signal.Wavelength Pump.Power*Pump.Wavelength]./(h*c);
