@@ -145,9 +145,8 @@ N2 =((h*Fiber.zeta)^-1)*(sol.y(1,:)*Signal.Absorption(1,ss)/(c/Signal.Wavelength
       sol.y(2,:)*(Pump.Absorption(1,pp)+Pump.Gain(1,pp))/(c/Pump.Wavelength(1,pp))+...
       sol.y(3,:)*(ASE.Absorption(1,ss)+ASE.Gain(1,ss))/(c/ASE.Wavelength(1,ss))+...
       sol.y(4,:)*(ASE.Absorption(1,ss)+ASE.Gain(1,ss))/(c/ASE.Wavelength(1,ss))));
-      
-      g=((Signal.Gain(1,ss)+Signal.Absorption(1,ss))*N2 - Signal.Absorption(1,ss));
-      gain2(kk,aux) = 10*log10(  exp( trapz(sol.x,g) )  );
+    
+                gain2(kk,aux) = exp(((Signal.Absorption(1,ss)+Signal.Gain(1,ss))*mean(N2)-Signal.Absorption(1,ss))*Fiber.Length);
     
     end
 aux = aux + 1;
