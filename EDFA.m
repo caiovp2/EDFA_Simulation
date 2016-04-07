@@ -82,23 +82,9 @@ ASE.Absorption = ASE.Overlap*ASE.sigmaA*Fiber.nt;
 ASE.Gain       = ASE.Overlap*ASE.sigmaE*Fiber.nt;
 
 %% Analytical Solution to the two-level system
-
- Qin = [Signal.Power*Signal.Wavelength Pump.Power*Pump.Wavelength]./(h*c);
  
- implicit = @(x,y) Function_EDFA_Analytical(x,Fiber,Signal,Pump,h,c);
- xo = [0 sum(Qin)];
- Qout = fzero(implicit,xo);
+ [Ps,Pp] = Function_EDFA_Analytical_Model(Fiber,Signal,Pump,h,c);
  
- A = [Signal.Absorption Pump.Absorption];
- G = [Signal.Gain Pump.Gain];
- 
- 
- Ps = Qin(1,1)*exp( ( A(1,1)+G(1,1) )*( Qin(1,1)+Qin(1,2)-Qout )/Fiber.zeta-...
-                               A(1,1)*Fiber.Length )*h*c/Signal.Wavelength;
-                           
- Pp = Qin(1,2)*exp( ( A(1,2)+G(1,2) )*( Qin(1,1)+Qin(1,2)-Qout )/Fiber.zeta-...
-                                 A(1,2)*Fiber.Length )*h*c/Pump.Wavelength; 
-
 %% End
 
 return; % Ends the simulation
@@ -110,31 +96,40 @@ return; % Ends the simulation
 tic; % start timer
 aux = 1;
 
-
-    for kk=1:8
-        Pump.Power = kk*1e-3;
+    for kk=1:40
+        
+    Pump.Power = kk*1e-3;
+    
+    %Solve analytical model to find guesses
+    [Ps,Pp] = Function_EDFA_Analytical_Model(Fiber,Signal,Pump,h,c);
+    
     odes = @(x,y) Function_Diff_Equations(x,y,Fiber,Signal,Pump,ASE,h,m,c);
     bcs = @(xa,ya) Function_Boundary_Conditions(xa,ya,Signal,Pump,ASE);
     
     options = bvpset('RelTol',1e-5,'AbsTol',1e-9);
 
-    solinit = bvpinit(linspace(0,Fiber.Length,50),[ Pump.Power Signal.Power 0 0]);
+    solinit = bvpinit(linspace(0,Fiber.Length,50),[ Ps Pp 0 0]);
 
     sol = bvp4c(odes,bcs,solinit,options);
 
-    gain(kk,1) = 10*log10(sol.y(1,length(sol.y))/sol.y(1,1));
-    N2 = Function_Population(Fiber,Signal,Pump,ASE,h,c,sol.y);   
+    
+    N2 = Function_Population(Fiber,Signal,Pump,ASE,h,c,sol.y);
     g = ((Signal.Gain+Signal.Absorption)*N2 - Signal.Absorption);
-    gain2(kk,1) = 10*log10(  exp( trapz(sol.x,g) )  );
+    
+    % Two ways of obtaining gain:
+    gain(kk,auxiliar) = 10*log10(sol.y(1,length(sol.y))/sol.y(1,1));% Pin/Pout
+    %gain(kk,1) = 10*log10(  exp( trapz(sol.x,g) )  );       % exp(integral(g))
+    
+    upper_pop(kk,auxiliar) = mean(N2);
+    
+    ase_bckd(kk,auxiliar) = sol.y(3,length(sol.y));
+    ase_fwd(kk,auxiliar) = sol.y(4,1);
     end
 
 figure;
 plot(gain);
-hold on;
-plot(gain2,'r')
 TEXT = ['signal:',num2str(Signal.Wavelength*1e9),'nm // pump:',num2str(Pump.Wavelength*1e9),'nm'];
 title(TEXT);
-legend('Pout/Pin','Book equation','Location','Best')
 
 % Display execution time
 fprintf('\nTempo de processamento: %d segundos.\n',floor(toc));
@@ -249,3 +244,20 @@ title('Upper State Population');
 xlabel('Fiber Length [m]');
 ylabel('Upper State Population');
 axis([0 Fiber.Length 0 1.1]);
+
+%% Others (ERASE AFTER)
+
+load('gain_980_1530.mat');
+load('gain_980_1550.mat');
+load('gain_1480_1530.mat');
+load('gain_1480_1550.mat');
+
+power = 1:40;
+
+figure;
+plot(power,gain_980_1530_1,power,gain_980_1550_1,power,gain_1480_1530_1,power,gain_1480_1550_1)
+legend('980:1530','980:1550','1480:1530','1480:1550','Location','Best');
+
+figure;
+plot(power,gain_980_1530_2,power,gain_980_1550_2,power,gain_1480_1530_2,power,gain_1480_1550_2)
+legend('980:1530','980:1550','1480:1530','1480:1550','Location','Best');
