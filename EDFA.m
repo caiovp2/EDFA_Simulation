@@ -138,10 +138,6 @@ fprintf('\nTempo de processamento: %d segundos.\n',floor(toc));
 
     tic; % start timer
      
-    %Pump.Power = 40e-3;
-    
-    %Continuation method
-    % 1) Define ODEs and BCs
     odes = @(x,y) Function_Diff_Equations(x,y,Fiber,Signal,Pump,ASE,h,m,c);
     bcs = @(xa,ya) Function_Boundary_Conditions(xa,ya,Signal,Pump,ASE);
     
@@ -151,10 +147,10 @@ fprintf('\nTempo de processamento: %d segundos.\n',floor(toc));
     
     sol = bvp4c(odes,bcs,solinit,options);
     
-%     gain(kk,aux) = 10*log10(sol.y(1,length(sol.y))/sol.y(1,1));
-%     N2 = Function_Population(Fiber,Signal,Pump,ASE,h,c,sol.y);   
-%     g=((Signal.Gain+Signal.Absorption)*N2 - Signal.Absorption);
-%     gain2(kk,aux) = 10*log10(  exp( trapz(sol.x,g) )  );
+   gain = 10*log10(sol.y(1,:)/sol.y(1,1));
+   N2 = Function_Population(Fiber,Signal,Pump,ASE,h,c,sol.y);   
+   g=((Signal.Gain+Signal.Absorption)*N2 - Signal.Absorption);
+   gain2 = 10*log10(  exp( trapz(sol.x,g) )  );
     figure;
     plot(sol.x,sol.y);
     legend('s','p','a+','a-');

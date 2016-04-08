@@ -110,7 +110,7 @@ m     = 2;                            % Number of modes []
   Signal.Wavelength = 1550e-9; % Wavelength [m]
   
 %% Pump Laser
-  Pump.Power = 2e-3; % Power [W]
+  Pump.Power = 20e-3; % Power [W]
   Pump.u = 1;         % Direction of Propagation [1=Forward  -1=Backward]
   Pump.l = 0.03;      % Excess Losses [dB/m]
   Pump.Wavelength = 1480*1e-9; % Wavelength [m]
