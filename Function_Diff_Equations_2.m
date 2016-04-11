@@ -1,5 +1,10 @@
-%function dP = Function_Diff_Equations(z,P,options,Fiber,Signal,Pump,ASE,h,m,c)
-function dP = Function_Diff_Equations(z,P,Fiber,Signal,Pump,ASE,h,m,c)
+function dP = Function_Diff_Equations_2(z,P,Fiber,Signal,Pump,ASE,h,m,c)
+
+minargs  = 9; 
+maxargs  = 9;
+narginchk(minargs, maxargs) % Checks if the number of inputs is between
+                            % minargs and maxargs
+                            
 
 A = [Signal.Absorption  , Pump.Absorption , ASE.Absorption , ASE.Absorption ];
 G = [Signal.Gain  , Pump.Gain , ASE.Gain , ASE.Gain ];
@@ -7,9 +12,9 @@ v = c./[Signal.Wavelength  , Pump.Wavelength , ASE.Wavelength , ASE.Wavelength ]
 u = [Signal.u , Pump.u, ASE.u, -ASE.u];
 L = (log(10)/10).*[Signal.l , Pump.l, ASE.l, ASE.l];
 
-s = length(Signal.Power);
-p = length(Pump.Power);
-a = 2*length(ASE.Power);
+s = length(Signal.Wavelength);
+p = length(Pump.Wavelength);
+a = 2*length(ASE.Wavelength);
 dP = zeros(s+p+a,1);
                          
 mm = 0;
@@ -30,12 +35,17 @@ N = mm/nn;
 % PUMP
  dP(2,1) = u(1,2)*(A(1,2)+G(1,2))*N*P(2,1)  - ...
            u(1,2)*(A(1,2)+L(1,2))*P(2,1);
+       
+for kk=s+p+1:s+p+a/2       
 % ASE+
- dP(3,1) = u(1,3)*(A(1,3)+G(1,3))*N*P(3,1)  + ...
-           u(1,3)*G(1,3)*N*m*h*v(1,3)*ASE.BW - ...
-           u(1,3)*(A(1,3)+L(1,3))*P(3,1);
+ dP(kk,1) = u(1,kk)*(A(1,kk)+G(1,kk))*N*P(kk,1)  + ...
+           u(1,kk)*G(1,kk)*N*m*h*v(1,kk)*ASE.BW - ...
+           u(1,kk)*(A(1,kk)+L(1,kk))*P(kk,1);  
+end
+
+for kk=s+p+(a/2)+1:s+p+a
 % ASE-
- dP(4,1) = u(1,4)*(A(1,4)+G(1,4))*N*P(4,1)  + ...
-           u(1,4)*G(1,4)*N*m*h*v(1,4)*ASE.BW - ...
-           u(1,4)*(A(1,4)+L(1,4))*P(4,1);
- 
+ dP(kk,1) = u(1,kk)*(A(1,kk)+G(1,kk))*N*P(kk,1)  + ...
+           u(1,kk)*G(1,kk)*N*m*h*v(1,kk)*ASE.BW - ...
+           u(1,kk)*(A(1,kk)+L(1,kk))*P(kk,1);
+end

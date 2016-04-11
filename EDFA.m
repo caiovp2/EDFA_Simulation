@@ -51,7 +51,7 @@
 %c
 %c    You should have received a copy of the GNU General Public License
 %c    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-                            
+
 %% Input Files
 
 % Wipes out data from previous executions
@@ -62,13 +62,24 @@ close all; % Closes figures
 % Calls Inputs Files
 EDFA_Input_Data;
 
+%% Cross Sections
+
+[Signal.sigmaA , Signal.sigmaE] = Function_CrossSection(CrossSection,Signal);
+[Pump.sigmaA , Pump.sigmaE] = Function_CrossSection(CrossSection,Pump);
+
+for kk=1:length(ASE.Wavelength)
+[ASE.sigmaA(1,kk) , ASE.sigmaE(1,kk)] = Function_CrossSection(CrossSection,ASE,kk);
+end
+
 %% Calculates the Overlap Parameters
 
 [Pump.Overlap,Pump.RC,Pump.MI,~] = Function_Overlap(Fiber,Pump);
 
 [Signal.Overlap,Signal.RC,Signal.MI,~] = Function_Overlap(Fiber,Signal);
 
-[ASE.Overlap,~,~,~] = Function_Overlap(Fiber,ASE);
+for kk=1:length(ASE.Wavelength)
+[ASE.Overlap(1,kk),~,~,~] = Function_Overlap(Fiber,ASE,kk);
+end
 
 %% Absorption and Gain coefficients
 
@@ -78,12 +89,15 @@ Pump.Gain         = Pump.Overlap*Pump.sigmaE*Fiber.nt;
 Signal.Absorption = Signal.Overlap*Signal.sigmaA*Fiber.nt;
 Signal.Gain       = Signal.Overlap*Signal.sigmaE*Fiber.nt;
 
-ASE.Absorption = ASE.Overlap*ASE.sigmaA*Fiber.nt;
-ASE.Gain       = ASE.Overlap*ASE.sigmaE*Fiber.nt;
+for kk=1:length(ASE.Wavelength)
+ASE.Absorption(1,kk) = ASE.Overlap(1,kk)*ASE.sigmaA(1,kk)*Fiber.nt;
+ASE.Gain(1,kk)       = ASE.Overlap(1,kk)*ASE.sigmaE(1,kk)*Fiber.nt;
+end
 
 %% Analytical Solution to the two-level system
  
  [Ps,Pp] = Function_EDFA_Analytical_Model(Fiber,Signal,Pump,h,c);
+ Gs=10*log10(Ps/Signal.Power);
  
 %% End
 
@@ -103,7 +117,7 @@ aux = 1;
     %Solve analytical model to find guesses
     [Ps,Pp] = Function_EDFA_Analytical_Model(Fiber,Signal,Pump,h,c);
     
-    odes = @(x,y) Function_Diff_Equations(x,y,Fiber,Signal,Pump,ASE,h,m,c);
+    odes = @(x,y) Function_Diff_Equations_2(x,y,Fiber,Signal,Pump,ASE,h,m,c);
     bcs = @(xa,ya) Function_Boundary_Conditions(xa,ya,Signal,Pump,ASE);
     
     options = bvpset('RelTol',1e-5,'AbsTol',1e-9);
@@ -126,10 +140,10 @@ aux = 1;
     ase_fwd(kk,auxiliar) = sol.y(4,1);
     end
 
-figure;
-plot(gain);
-TEXT = ['signal:',num2str(Signal.Wavelength*1e9),'nm // pump:',num2str(Pump.Wavelength*1e9),'nm'];
-title(TEXT);
+%figure;
+%plot(gain);
+%TEXT = ['signal:',num2str(Signal.Wavelength*1e9),'nm // pump:',num2str(Pump.Wavelength*1e9),'nm'];
+%title(TEXT);
 
 % Display execution time
 fprintf('\nTempo de processamento: %d segundos.\n',floor(toc));
@@ -138,19 +152,21 @@ fprintf('\nTempo de processamento: %d segundos.\n',floor(toc));
 
     tic; % start timer
      
-    odes = @(x,y) Function_Diff_Equations(x,y,Fiber,Signal,Pump,ASE,h,m,c);
+    odes = @(x,y) Function_Diff_Equations_2(x,y,Fiber,Signal,Pump,ASE,h,m,c);
     bcs = @(xa,ya) Function_Boundary_Conditions(xa,ya,Signal,Pump,ASE);
     
     options = bvpset('RelTol',1e-5,'AbsTol',1e-9);
 
-    solinit=bvpinit(linspace(0,Fiber.Length,50),[ Ps Pp 0 0]);
+    solinit=bvpinit(linspace(0,Fiber.Length,50),[ Ps Pp zeros(1,2*length(ASE.Wavelength))]);
     
     sol = bvp4c(odes,bcs,solinit,options);
     
-   gain = 10*log10(sol.y(1,:)/sol.y(1,1));
-   N2 = Function_Population(Fiber,Signal,Pump,ASE,h,c,sol.y);   
-   g=((Signal.Gain+Signal.Absorption)*N2 - Signal.Absorption);
-   gain2 = 10*log10(  exp( trapz(sol.x,g) )  );
+    gain = 10*log10(sol.y(1,:)/sol.y(1,1));
+    N2 = Function_Population(Fiber,Signal,Pump,ASE,h,c,sol.y);   
+    g=((Signal.Gain+Signal.Absorption)*N2 - Signal.Absorption);
+    gain1 = gain(1,length(gain));
+    gain2 = 10*log10(  exp( trapz(sol.x,g) )  );
+    
     figure;
     plot(sol.x,sol.y);
     legend('s','p','a+','a-');
@@ -162,7 +178,7 @@ fprintf('\nTempo de processamento: %d segundos.\n',floor(toc));
 
 figure;
 plot(CrossSection.Wavelength*1e9,CrossSection.Absorption,'k',...
-     CrossSection.Wavelength*1e9,CrossSection.Emission,'--k',...
+     CrossSection.Wavelength*1e9,CrossSection.Emission,'r',...
      'LineWidth',1.5);
 axis([900 1650 0 10e-25]); 
 legend('Absorption','Emission')
@@ -241,19 +257,32 @@ xlabel('Fiber Length [m]');
 ylabel('Upper State Population');
 axis([0 Fiber.Length 0 1.1]);
 
-%% Others (ERASE AFTER)
 
-load('gain_980_1530.mat');
-load('gain_980_1550.mat');
-load('gain_1480_1530.mat');
-load('gain_1480_1550.mat');
-
-power = 1:40;
-
-figure;
-plot(power,gain_980_1530_1,power,gain_980_1550_1,power,gain_1480_1530_1,power,gain_1480_1550_1)
-legend('980:1530','980:1550','1480:1530','1480:1550','Location','Best');
 
 figure;
 plot(power,gain_980_1530_2,power,gain_980_1550_2,power,gain_1480_1530_2,power,gain_1480_1550_2)
 legend('980:1530','980:1550','1480:1530','1480:1550','Location','Best');
+
+%% PARA FAZER FOR GERAL (APAGAR DEPOIS)
+
+% %% INICIO FOR GERAL
+% auxiliar=0;
+% 
+% for mm=1:2
+%     for nn=1:2
+%         
+% a = [1530 1550]*1e-9;
+% b = [980 1480]*1e-9;
+% 
+% Signal.Wavelength=a(1,mm);
+% Pump.Wavelength=b(1,nn);
+% ASE.Wavelength=Signal.Wavelength;
+% 
+% auxiliar = auxiliar+1;
+% 
+% % FIM FOR GERAL
+% 
+%     end
+%     end
+% return;
+
